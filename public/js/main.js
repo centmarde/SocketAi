@@ -73,10 +73,23 @@ chatForm.addEventListener("submit", (e) => {
 function outputMessage(message) {
   const div = document.createElement("div");
   div.classList.add("message");
-  div.innerHTML = `<p class="meta">${message.username} <span>${message.time}</span></p>
-                   <p class="text">${message.text}</p>`;
+
+  // Add the username, time, and image (if available)
+  div.innerHTML = `
+ 
+  <div class="d-flex justify-content-start mt-2"><p class="meta">
+      ${message.imageUrl ? `<img src="${message.imageUrl}" alt="User Icon" style="width: 40px; height: 20px; border-radius: 50%; margin-right: 2px;">` : ''}
+     
+    </p> <p style="background-color: #f0f0f0; padding: 5px; border-radius: 10px; margin-right: 10px;"> ${message.username} </p></div>
+    
+   <span class="card p-1"> <p class="text">${message.text}</p><span class="text-end">${message.time}</span></span>
+  `;
+
+  // Append the message to the chat
   document.querySelector(".chat-messages").appendChild(div);
 }
+
+
 
 // Output typing indicators to DOM
 function outputTypingIndicators() {

@@ -1,6 +1,12 @@
 body {
-  background-color: #f8f9fa; /* Light background */
+  height: 100vh;
+  margin: 0;
+  background-image: linear-gradient(to top, #c71d6f 0%, #d09693 100%);
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
 }
+
 .join-container {
   max-width: 400px;
   margin: auto;
@@ -13,13 +19,8 @@ body {
   text-align: center;
   margin-bottom: 1.5rem;
 }
-.join-header h1 {
-  font-size: 2rem;
-}
 
-body {
-  background-color: #f8f9fa; /* Light background */
-}
+
 .chat-container {
   max-width: 800px;
   margin: auto;
@@ -49,4 +50,8 @@ body {
 #msg {
   flex: 1;
   margin-right: 0.5rem; /* Space between input and button */
+}
+.title{
+  font-family: "Yellowtail", cursive;
+font-size: 5rem;
 }

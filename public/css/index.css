@@ -1,0 +1,26 @@
+body {
+    height: 100vh;
+    margin: 0;
+    background-image: linear-gradient(to top, #c71d6f 0%, #d09693 100%);
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+  }
+
+  .title{
+    font-family: "Yellowtail", cursive;
+  font-size: 5rem;
+  }
+
+  @media (max-width: 768px) {
+    .title {
+        font-size: 3rem; 
+    }
+}
+
+/* For even smaller screens */
+@media (max-width: 480px) {
+    .title {
+        font-size: 2rem; 
+    }
+}

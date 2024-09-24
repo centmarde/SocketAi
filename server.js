@@ -15,7 +15,7 @@ const Groq = require('groq-sdk');
 
 const groq = new Groq({
   apiKey: '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',
-  dangerouslyAllowBrowser: true // Enable browser usage (not recommended for production)
+  dangerouslyAllowBrowser: true
 });
 
 // Initialize Express app and HTTP server
@@ -37,7 +37,7 @@ db.serialize(() => {
     username TEXT NOT NULL,
     text TEXT NOT NULL,
     time TEXT NOT NULL,
-    ai_response TEXT DEFAULT NULL -- Add column for AI response
+    ai_response TEXT DEFAULT NULL
   )`, (err) => {
     if (err) {
       console.error("Error creating messages table:", err.message);
@@ -63,6 +63,24 @@ db.serialize(() => {
 const botName = "Bot";
 const AI_ROOM_NAME = "AI Chat Bot"; // Define AI chat room name
 
+function getLastMessages(callback) {
+  db.all(`SELECT * FROM messages ORDER BY time DESC LIMIT 10`, [], (err, rows) => {
+    if (err) {
+      console.error("Error retrieving messages:", err.message);
+      return callback(err);
+    }
+    callback(null, rows.reverse());
+  });
+}
+
+function clearOldMessages() {
+  db.run(`DELETE FROM messages WHERE id NOT IN (SELECT id FROM messages ORDER BY time DESC LIMIT 10)`, (err) => {
+    if (err) {
+      console.error("Error clearing old messages:", err.message);
+    }
+  });
+}
+
 // Run when client connects
 io.on("connection", (socket) => {
   console.log('A user connected');
@@ -83,7 +101,7 @@ io.on("connection", (socket) => {
     );
 
     // Welcome current user
-    socket.emit("message", formatMessage(botName, "Welcome to ChatHaven!"));
+    socket.emit("message", formatMessage(botName, "Welcome!"));
 
     // Broadcast when a user connects
     socket.broadcast
@@ -94,6 +112,13 @@ io.on("connection", (socket) => {
     io.to(user.room).emit("roomUsers", {
       room: user.room,
       users: getRoomUsers(user.room),
+    });
+
+    // Send the last 7 messages to the user
+    getLastMessages((err, messages) => {
+      if (!err) {
+        socket.emit("previousMessages", messages);
+      }
     });
   });
 
@@ -108,6 +133,8 @@ io.on("connection", (socket) => {
       (err) => {
         if (err) {
           console.error("Error inserting message into database:", err.message);
+        } else {
+          clearOldMessages();
         }
       }
     );
@@ -167,15 +194,16 @@ io.on("connection", (socket) => {
                       "content": msg // Pass the user message to the AI
                   }
               ],
-              "model": "llama3-8b-8192",
+              "model": "llama3-groq-70b-8192-tool-use-preview",
               "temperature": 1,
               "max_tokens": 1024,
               "top_p": 1,
-              "stream": false // Set to true if you want streaming responses
+              "stream": false
           });
 
           // Emit the AI response back to the room
           const aiResponse = chatCompletion.choices[0].message.content;
+          const aiImageUrl = "https://upload.wikimedia.org/wikipedia/commons/1/13/ChatGPT-Logo.png";
           
           // Store the AI response in the database
           db.run(`INSERT INTO messages (username, text, time, ai_response) VALUES (?, ?, ?, ?)`, 
@@ -183,20 +211,22 @@ io.on("connection", (socket) => {
             (err) => {
               if (err) {
                 console.error("Error inserting AI message into database:", err.message);
+              } else {
+                clearOldMessages();
               }
             }
           );
 
-          io.to(user.room).emit("message", formatMessage("AI", aiResponse)); // Format the AI response
+          io.to(user.room).emit("message", formatMessage("GPT", aiResponse,aiImageUrl));
       } catch (error) {
           console.error("Error fetching AI response:", error);
       }
     }
   });
+  
 
   // Listen for data updates
   socket.on('updateData', (data) => {
-    // Broadcast the update to all clients
     socket.broadcast.emit('dataUpdated', data);
   });
 });
