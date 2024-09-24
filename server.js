@@ -11,6 +11,13 @@ const {
   getRoomUsers,
 } = require("./include/users");
 
+const Groq = require('groq-sdk');
+
+const groq = new Groq({
+  apiKey: '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',
+  dangerouslyAllowBrowser: true // Enable browser usage (not recommended for production)
+});
+
 // Initialize Express app and HTTP server
 const app = express();
 const server = http.createServer(app);
@@ -29,7 +36,8 @@ db.serialize(() => {
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     username TEXT NOT NULL,
     text TEXT NOT NULL,
-    time TEXT NOT NULL
+    time TEXT NOT NULL,
+    ai_response TEXT DEFAULT NULL -- Add column for AI response
   )`, (err) => {
     if (err) {
       console.error("Error creating messages table:", err.message);
@@ -53,6 +61,7 @@ db.serialize(() => {
 
 // Chat bot name
 const botName = "Bot";
+const AI_ROOM_NAME = "AI Chat Bot"; // Define AI chat room name
 
 // Run when client connects
 io.on("connection", (socket) => {
@@ -140,6 +149,48 @@ io.on("connection", (socket) => {
         room: user.room,
         users: getRoomUsers(user.room),
       });
+    }
+  });
+
+  // Listen for AI messages
+  socket.on("aiMessage", async (msg) => {
+    const user = getCurrentUser(socket.id);
+    
+    // Check if the user is in the AI Chat Bot room
+    if (user.room === AI_ROOM_NAME) {
+      // Use Groq to get AI response
+      try {
+          const chatCompletion = await groq.chat.completions.create({
+              "messages": [
+                  {
+                      "role": "user",
+                      "content": msg // Pass the user message to the AI
+                  }
+              ],
+              "model": "llama3-8b-8192",
+              "temperature": 1,
+              "max_tokens": 1024,
+              "top_p": 1,
+              "stream": false // Set to true if you want streaming responses
+          });
+
+          // Emit the AI response back to the room
+          const aiResponse = chatCompletion.choices[0].message.content;
+          
+          // Store the AI response in the database
+          db.run(`INSERT INTO messages (username, text, time, ai_response) VALUES (?, ?, ?, ?)`, 
+            ["AI", msg, new Date().toISOString(), aiResponse], 
+            (err) => {
+              if (err) {
+                console.error("Error inserting AI message into database:", err.message);
+              }
+            }
+          );
+
+          io.to(user.room).emit("message", formatMessage("AI", aiResponse)); // Format the AI response
+      } catch (error) {
+          console.error("Error fetching AI response:", error);
+      }
     }
   });
 
