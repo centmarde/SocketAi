@@ -1,0 +1,21 @@
+{
+  "name": "chat",
+  "version": "1.0.0",
+  "description": "Realtime chat using websocket",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server",
+    "dev": "nodemon server"
+  },
+  "author": "Christ Charl Gabales",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.21.0",
+    "moment": "^2.30.1",
+    "socket.io": "^4.8.0",
+    "sqlite3": "^5.1.7"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.7"
+  }
+}
