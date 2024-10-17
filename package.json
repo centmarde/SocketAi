@@ -7,7 +7,7 @@
     "start": "node server",
     "dev": "nodemon server"
   },
-  "author": "Christ Charl Gabales",
+  "author": "Strongest Algorithm",
   "license": "MIT",
   "dependencies": {
     "express": "^4.21.0",
